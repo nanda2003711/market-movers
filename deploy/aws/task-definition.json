@@ -1,0 +1,73 @@
+{
+  "family": "market-movers",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::REPLACE_WITH_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::REPLACE_WITH_ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "REPLACE_WITH_ACCOUNT_ID.dkr.ecr.REPLACE_WITH_REGION.amazonaws.com/market-movers-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "ALLOWED_ORIGINS",
+          "value": "https://REPLACE_WITH_ALB_DNS_NAME"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "FINNHUB_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REPLACE_WITH_REGION:REPLACE_WITH_ACCOUNT_ID:secret:FINNHUB_API_KEY"
+        },
+        {
+          "name": "GROQ_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REPLACE_WITH_REGION:REPLACE_WITH_ACCOUNT_ID:secret:GROQ_API_KEY"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/market-movers",
+          "awslogs-create-group": "true",
+          "awslogs-region": "REPLACE_WITH_REGION",
+          "awslogs-stream-prefix": "backend"
+        }
+      }
+    },
+    {
+      "name": "frontend",
+      "image": "REPLACE_WITH_ACCOUNT_ID.dkr.ecr.REPLACE_WITH_REGION.amazonaws.com/market-movers-frontend:latest",
+      "essential": true,
+      "dependsOn": [
+        {
+          "containerName": "backend",
+          "condition": "START"
+        }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/market-movers",
+          "awslogs-create-group": "true",
+          "awslogs-region": "REPLACE_WITH_REGION",
+          "awslogs-stream-prefix": "frontend"
+        }
+      }
+    }
+  ]
+}
