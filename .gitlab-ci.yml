@@ -1,0 +1,45 @@
+stages:
+  - install
+  - build
+  - test-backend
+
+install-frontend:
+  stage: install
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm install --legacy-peer-deps
+  cache:
+    key: frontend-deps
+    paths:
+      - frontend/node_modules/
+
+build-frontend:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm install --legacy-peer-deps
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 hour
+
+install-backend:
+  stage: install
+  image: python:3.12-slim
+  script:
+    - cd backend
+    - pip install -r requirements.txt
+
+test-backend:
+  stage: test-backend
+  image: python:3.12-slim
+  script:
+    - cd backend
+    - pip install -r requirements.txt
+    - python -c "import main; print('Backend imports OK')"
+  variables:
+    FINNHUB_API_KEY: "dummy"
+    GROQ_API_KEY: "dummy"
